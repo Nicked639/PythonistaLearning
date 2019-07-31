@@ -1,12 +1,11 @@
 import asyncio
 import os
 import time
-import console
-import aiohttp
-import progressbar
-
-import sys
 import webbrowser
+import aiohttp
+from progressbar import widgets, ProgressBar
+import sys
+import console
 
 folder_name = sys.argv[1]
 urls = sys.argv[2].split(',')
@@ -20,7 +19,13 @@ loop = asyncio.get_event_loop()
 
 class Progress:
     def __init__(self, sum_exp):
-        self.bar = progressbar.ProgressBar(max_value=sum_exp)
+        new_widgets = [
+            widgets.Percentage(),
+            ' (', widgets.SimpleProgress(),
+            ') ', widgets.Bar(),
+            ' ', widgets.Timer(format='Elapsed Timer: %(seconds_elapsed).3fs'),
+        ]
+        self.bar = ProgressBar(max_value=sum_exp, widgets=new_widgets)
         self.finished = 0
         
     def update(self, job_size) -> None:
@@ -51,6 +56,7 @@ async def get_url(url, session, progress):
 
 
 async def main():
+    console.clear()
     len_chunck = 100
     len_urls = len(urls)
     
@@ -59,12 +65,12 @@ async def main():
     
     timeout = aiohttp.ClientTimeout(total=2.5)
     async with aiohttp.ClientSession(timeout=timeout) as ss:
-        for i in range(0, len_urls, len_chunck):            
+        for i in range(0, len_urls, len_chunck):
             tasks = [loop.create_task(
                 get_url(url, ss, progress)) for url in urls[i: i+len_chunck]]
             await asyncio.wait(tasks)
     progress.finish()
 
-console.clear()
+
 start = time.time()
 loop.run_until_complete(main())
