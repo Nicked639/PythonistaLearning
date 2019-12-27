@@ -25,11 +25,12 @@ def download_img(url):
 	else:
 		pass
 	dp = dp.replace('□', '■', dp_count)
+	img_name = url.split(',')[0] + '.jpg'
+	url = url.split(',')[1]
+	#img_name = url.split('/')[-1]
 	sys.stdout.write('\r'+status+dp+'('+str(down_count)+'/'+str(img_num)+')')
 	sys.stdout.flush()
 	img_data = requests.get(url, timeout=7).content
-	# img_name = str(name) + '.jpg'
-	img_name = url.split('/')[-1]
 	name += 1
 	with open(folder_path + '/' + img_name, 'wb') as handler:
 		handler.write(img_data)
@@ -51,6 +52,8 @@ if __name__ == '__main__':
 	if not os.path.isdir(folder_path):
  		os.makedirs(folder_path)
 	download_url_list = IMGList
+	for i in range(len(IMGList)):
+		download_url_list[i] = str(i)+','+download_url_list[i]
 	img_num = len(download_url_list)
 	# 下载图像
 	console.set_color(1, 0, .8)
