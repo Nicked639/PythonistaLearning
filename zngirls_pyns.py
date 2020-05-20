@@ -9,6 +9,7 @@ import sys
 import console
 import appex
 from bs4 import BeautifulSoup
+import clipboard
 
 
 def config_url(url):
@@ -20,12 +21,19 @@ def config_url(url):
     pattern_name = '(?<=<h1 id="htilte">).*(?=</h1>)'
     img_zhang = re.findall(pattern_zhang, hs.text)[0]
     img_num = int(img_zhang[0:-1])
-    print(hs.text)
+    #print(hs.text)
     #folder_name = re.findall(pattern_name, hs.text)[0]
     folder_name = soup.h1.string
-    print(folder_name)
-    doc_path = os.path.join(os.path.expanduser('~/Documents/Downloads'),'Zngirls_Images')
-    folder_path = os.path.join(doc_path, folder_name)
+    actress_name = folder_name.split(' ')[-1]
+    name_prefix = folder_name.split(' ')[1]
+    #print(name_prefix)
+    doc_path = os.path.join(os.path.expanduser('/private/var/mobile/Library/Mobile Documents/iCloud~com~omz-software~Pythonista3/Documents/Downloads'),'TaoTu8_Images')
+    actress_path=os.path.join(doc_path,actress_name)
+    if not os.path.isdir(actress_path):
+        os.makedirs(actress_path)
+    folder_path = os.path.join(actress_path,folder_name)
+    if not os.path.isdir(folder_path):
+        os.makedirs(folder_path)
     pattern_url = '(?<=gallery)\/\d{5}\/\d{5}\/(?=s)'
     match_url = re.findall(pattern_url, hs.text)[0]
     url_head = 'https://t1.onvshen.com:85/gallery' + match_url + 's/'
@@ -38,7 +46,7 @@ def config_url(url):
             img_url.append(url_head + '0' + str(i) + '.jpg')
         else:
             img_url.append(url_head + str(i) + '.jpg')
-    config = {'img_num': img_num, 'img_url':img_url,'folder_name': folder_name,'folder_path': folder_path}
+    config = {'img_num': img_num, 'img_url':img_url,'folder_name': folder_name,'folder_path': folder_path,'name_prefix':name_prefix}
     return config
 
 
@@ -75,8 +83,11 @@ def download_img(url):
                      '(' + str(down_count) + '/' + str(img_num) + ')')
     sys.stdout.flush()
     header = {'Referer': 'https://www.nvshens.com'}
-    img_data = requests.get(url, headers=header, timeout=10).content
-    img_name = url.split('/')[-1]
+    img_data = requests.get(url, headers=header, timeout=20).content
+    if name_prefix:
+        img_name = name_prefix + '-' + url.split('/')[-1] + '.jpg'
+    else:
+        img_name = url.split('/')[-1] + '.jpg'
     with open(folder_path + '/' + img_name, 'wb') as handler:
         handler.write(img_data)
 
@@ -88,17 +99,20 @@ if __name__ == '__main__':
     dp_count = 0
     config = {}
     url = appex.get_url()
-    # url = 'https://www.nvshens.com/g/22377/10.html'
+    if url== None:
+    	url = clipboard.get()
+    print (url)
+
+
+    #url = 'https://m.nvshens.net/g/32262/'
     config = config_url(url)
     # 生成的存储图像路径，map 的函数接受一个参数，故用了全局参数作为存图路径
     folder_name = config['folder_name']
     img_num = config['img_num']
     download_url_list = config['img_url']
     folder_path = config['folder_path']
-    if os.path.isdir(folder_path):
-        pass
-    else:
-        os.makedirs(folder_path)
+    name_prefix = config['name_prefix']
+    
     # 下载图像
     console.clear()
     console.set_color(1,0,.8)
@@ -116,5 +130,5 @@ if __name__ == '__main__':
     for i in range(0, img_num):
 	    file_name = download_url_list[i].split('/')[-1]
 	    file_list.append(os.path.join(folder_path,file_name))
-    console.quicklook(file_list)
+    #console.quicklook(file_list)
     exit()
